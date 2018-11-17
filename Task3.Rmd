@@ -10,6 +10,7 @@ library(MASS)
 library(ISLR)
 library(dplyr)
 library(mosaic)
+library(ggplot2)
 
 Energy = read.csv("energydata_complete.csv")
 
@@ -18,6 +19,52 @@ Energy = read.csv("energydata_complete.csv")
 names(Energy)
 ```
 install.packages("s20x")
+
+##Five images of our data
+
+####Comparison of temperatures
+
+```{r}
+ggplot(Energy) +
+  geom_boxplot(aes(x=1, y=T1)) +
+  geom_boxplot(aes(x=2, y=T2)) +
+  geom_boxplot(aes(x=3, y=T3)) +
+  geom_boxplot(aes(x=4, y=T4)) +
+  geom_boxplot(aes(x=5, y=T5)) +
+  geom_boxplot(aes(x=6, y=T6)) +
+  geom_boxplot(aes(x=7, y=T7)) +
+  geom_boxplot(aes(x=8, y=T8)) +
+  geom_boxplot(aes(x=9, y=T9)) +
+  geom_boxplot(aes(x=10, y=T_out)) +
+  coord_flip() +
+  annotate("text", x=1:10, y=35, label=c("Kitchen", "Living Room", "Laundry Room", "Office Room", "Bathroom", "North side", "Ironing Room", "Teenager Room", "Parents Room", "Outside"), size=4) +
+   ylim(-8,38)
+```
+
+There are two measurements of temperature that are outside the house (North side and Outside) and eight that are inside. The outside ones have a much larger range while the inside ones stay more consistant over the seasons and over the day. From this we can see that colinearity between variables inside the house might be likely but less so when comparing inside and outside the house.
+
+#Comparison of humidity
+
+```{r}
+ggplot(Energy) +
+  geom_boxplot(aes(x=1, y=RH_1)) +
+  geom_boxplot(aes(x=2, y=RH_2)) +
+  geom_boxplot(aes(x=3, y=RH_3)) +
+  geom_boxplot(aes(x=4, y=RH_4)) +
+  geom_boxplot(aes(x=5, y=RH_5)) +
+  geom_boxplot(aes(x=6, y=RH_6)) +
+  geom_boxplot(aes(x=7, y=RH_7)) +
+  geom_boxplot(aes(x=8, y=RH_8)) +
+  geom_boxplot(aes(x=9, y=RH_9)) +
+  geom_boxplot(aes(x=10, y=RH_out)) +
+  coord_flip() +
+  annotate("text", x=1:10, y=110, label=c("Kitchen", "Living Room", "Laundry Room", "Office Room", "Bathroom", "North side", "Ironing Room", "Teenager Room", "Parents Room", "Outside"), size=4) +
+   ylim(-5, 120)
+```
+
+The graph of the humidity is a lot more interesting than the temperature graph because the two outside temperatures are no longer similar. The "north side"" humidity which is measured just outside the house is much lower than the "outside humidity" which is taken from weather station data nearby. There also is a huge range of humidity in the bathroom, which presumably comes from when people in the house shower.
+
+
 
 ```{r}
 #Create numerical summaries for at least 4 variables in your dataset
