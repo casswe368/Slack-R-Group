@@ -1,0 +1,28 @@
+---
+title: "Task 3"
+author: ""
+date: "11/16/2018"
+output: html_document
+---
+
+```{r}
+library(MASS)
+library(ISLR)
+library(dplyr)
+library(mosaic)
+
+Energy = read.csv("energydata_complete.csv")
+
+```
+```{r}
+names(Energy)
+```
+install.packages("s20x")
+
+```{r}
+#Create numerical summaries for at least 4 variables in your dataset
+myvars <- c("Appliances", "lights" ,"T1" ,"RH_1" )
+newdata <- Energy[myvars]
+library(psych)               
+describe(newdata)
+```
