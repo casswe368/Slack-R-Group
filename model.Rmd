@@ -1,0 +1,57 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(ISLR)
+library(glmnet)
+library(dplyr)
+library(tidyr)
+library(readr)
+appliances = read.csv("energydata_complete.csv")
+```
+
+```{r}
+appliances_data = na.omit(appliances)
+x = model.matrix(Appliances~., appliances_data)[,-1] # trim off the first column
+# leaving only the predictors
+y = appliances_data %>%
+select(Appliances) %>%
+unlist() %>%
+as.numeric()
+```
+
+```{r}
+set.seed(1)
+train = appliances_data %>%
+sample_frac(0.5)
+test = appliances_data %>%
+setdiff(train)
+x_train = model.matrix(Appliances~., train)[,-1]
+x_test = model.matrix(Appliances~., test)[,-1]
+y_train = train %>%
+select(Appliances) %>%
+unlist() %>%
+as.numeric()
+y_test = test %>%
+select(Appliances) %>%
+unlist() %>%
+as.numeric()
+```
+
+```{r}
+#pcr model
+library(pcr)
+pcr_mod=pcr(y_train,x_train,scale=TRUE,validation="CV")
+pcr_pred=predict(pcr_mod,test,ncomp=pcr_mod$ncomp)
+mean((y_test-pcr_pred)^2)
+```
+
+```{r}
+#pls model
+library(pls)
+pls_mod=pcr(y_train,x_train,scale=TRUE,validation="CV")
+pls_pred=predict(pls_mod,test,ncomp=pls_mod$ncomp)
+mean((y_test-pls_pred)^2)
+```
