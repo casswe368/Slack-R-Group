@@ -43,7 +43,7 @@ ggplot(Energy) +
 
 There are two measurements of temperature that are outside the house (North side and Outside) and eight that are inside. The outside ones have a much larger range while the inside ones stay more consistant over the seasons and over the day. From this we can see that colinearity between variables inside the house might be likely but less so when comparing inside and outside the house.
 
-#Comparison of humidity
+####Comparison of humidity
 
 ```{r}
 ggplot(Energy) +
@@ -64,7 +64,44 @@ ggplot(Energy) +
 
 The graph of the humidity is a lot more interesting than the temperature graph because the two outside temperatures are no longer similar. The "north side"" humidity which is measured just outside the house is much lower than the "outside humidity" which is taken from weather station data nearby. There also is a huge range of humidity in the bathroom, which presumably comes from when people in the house shower.
 
+####How correlated is temperature and humidity?
 
+```{r}
+#Indoor room
+ggplot(Energy) +
+  geom_point(aes(x=T1, y=RH_1)) +
+  geom_smooth(aes(x=T1, y=RH_1))
+
+#Outdoor room
+ggplot(Energy) +
+  geom_point(aes(x=T1, y=RH_1)) +
+  geom_smooth(aes(x=T6, y=RH_6))
+```
+
+Humidity does not seem to be correlated with temperature at all either inside or outside the house which is very facinating. My assumption was that since it is more humid on hot days, they will have a positive relationship, which is not reflected in the data at all.
+
+####Impact of temperature on appliance energy use
+
+Instead of looking at just one room, I am going to create a new variable that has the average temperature inside and another for the average temperature outside.
+
+```{r}
+Energy2 <- Energy %>%
+  mutate(avgInTemp = (T1+T2+T3+T4+T5+T7+T8+T9)/8) %>%
+  mutate(avgOutTemp = (T6 + T_out)/2)
+```
+
+Now we can use these new variables to check the impact on appliance energy use.
+
+```{r}
+ggplot(Energy2) +
+  geom_point(aes(x=avgInTemp, y=Appliances), color="lightblue") +
+  geom_point(aes(x=avgOutTemp, y=Appliances), color="pink") +
+  geom_smooth(aes(x=avgInTemp, y=Appliances), color="darkblue") +
+  geom_smooth(aes(x=avgOutTemp, y=Appliances), color="red")
+
+```
+
+There seems to be a slight increase in appliance energy usage as temperature increases but the difference is not clear enough to guess whether it may be statistically signficant before running the model.
 
 ```{r}
 #Create numerical summaries for at least 4 variables in your dataset
