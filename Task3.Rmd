@@ -74,7 +74,7 @@ ggplot(Energy) +
 
 #Outdoor room
 ggplot(Energy) +
-  geom_point(aes(x=T1, y=RH_1)) +
+  geom_point(aes(x=T6, y=RH_6)) +
   geom_smooth(aes(x=T6, y=RH_6))
 ```
 
@@ -110,3 +110,15 @@ newdata <- Energy[myvars]
 library(psych)               
 describe(newdata)
 ```
+
+```{r}
+#model_aov <- aov(Appliances ~ date + lights + T1 + RH_1 + T2 + RH_2 + T3 + RH_3 + T4 + RH_4 + T5 + RH_5 + T6 + RH_6 + T7 + RH_7 + T8 + RH_8 + T9 + RH_9 + T_out + Press_mm_hg + RH_out + Windspeed + Visibility + Tdewpoint + rv1 + rv2, Energy)
+Energy3 <- Energy %>%
+  select(-date)
+
+model_aov <- aov(Appliances ~. , Energy3)
+anova(model_aov)
+```
+
+Variables that have an impact:
+lights, T1, RH_1, T2, RH_2, T3, T4, RH_4, T5, T6, RH_7, T8, RH_8, T9, T_out, Windspeed, Tdewpoint
