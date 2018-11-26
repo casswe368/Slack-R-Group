@@ -9,11 +9,12 @@ library(glmnet)
 library(dplyr)
 library(tidyr)
 library(readr)
-appliances <- read_csv("/Users/xiruozheng/Downloads/energydata_complete (1).csv")
+appliances <- read_csv("energydata_complete.csv")
 ```
 
 ```{r}
 appliances_data = na.omit(appliances)
+appliances$date <- NULL
 x = model.matrix(Appliances~., appliances_data)[,-1] # trim off the first column
 # leaving only the predictors
 y = appliances_data %>%
