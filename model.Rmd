@@ -14,12 +14,8 @@ appliances = read.csv("energydata_complete.csv")
 
 ```{r}
 appliances_data = na.omit(appliances)
-x = model.matrix(Appliances~., appliances_data)[,-1] # trim off the first column
-# leaving only the predictors
-y = appliances_data %>%
-select(Appliances) %>%
-unlist() %>%
-as.numeric()
+appliances_data$date<- NULL
+summary(appliances_data)
 ```
 
 ```{r}
@@ -28,30 +24,34 @@ train = appliances_data %>%
 sample_frac(0.5)
 test = appliances_data %>%
 setdiff(train)
-x_train = model.matrix(Appliances~., train)[,-1]
-x_test = model.matrix(Appliances~., test)[,-1]
-y_train = train %>%
-select(Appliances) %>%
-unlist() %>%
-as.numeric()
-y_test = test %>%
-select(Appliances) %>%
-unlist() %>%
-as.numeric()
 ```
 
 ```{r}
 #pcr model
-library(pcr)
-pcr_mod=pcr(y_train,x_train,scale=TRUE,validation="CV")
+library(pls)
+pcr_mod=pcr(Appliances~.,data=train,scale=TRUE,validation="CV")
 pcr_pred=predict(pcr_mod,test,ncomp=pcr_mod$ncomp)
-mean((y_test-pcr_pred)^2)
+mean((test$Appliances-pcr_pred)^2)
+# Plot the root mean squared error
+validationplot(pcr_mod)
+# Plot the cross validation MSE
+validationplot(pcr_mod, val.type="MSEP")
+predplot(pcr_mod)
+coefplot(pcr_mod)
+summary(pcr_mod)
 ```
 
 ```{r}
 #pls model
 library(pls)
-pls_mod=pcr(y_train,x_train,scale=TRUE,validation="CV")
+pls_mod=pcr(Appliances~.,data=train,scale=TRUE,validation="CV")
 pls_pred=predict(pls_mod,test,ncomp=pls_mod$ncomp)
-mean((y_test-pls_pred)^2)
+mean((test$Appliances-pls_pred)^2)
+# Plot the root mean squared error
+validationplot(pls_mod)
+# Plot the cross validation MSE
+validationplot(pls_mod, val.type="MSEP")
+predplot(pls_mod)
+coefplot(pls_mod)
+summary(pls_mod)
 ```
