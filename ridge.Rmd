@@ -1,5 +1,5 @@
 ---
-title: "Untitled"
+title: "Ridge"
 output: html_document
 ---
 
@@ -9,12 +9,27 @@ library(glmnet)
 library(dplyr)
 library(tidyr)
 library(readr)
+library(mosaic)
+library(MASS)
+library(ggplot2)
 appliances <- read_csv("energydata_complete.csv")
 ```
 
+
 ```{r}
-appliances_data = na.omit(appliances)
-appliances$date <- NULL
+#model_aov <- aov(Appliances ~ date + lights + T1 + RH_1 + T2 + RH_2 + T3 + RH_3 + T4 + RH_4 + T5 + RH_5 + T6 + RH_6 + T7 + RH_7 + T8 + RH_8 + T9 + RH_9 + T_out + Press_mm_hg + RH_out + Windspeed + Visibility + Tdewpoint + rv1 + rv2, Energy)
+Energy3 <- appliances %>%
+  select(-date)
+
+model_aov <- aov(Appliances ~. , Energy3)
+anova(model_aov)
+```
+
+Variables that have an impact:
+lights, T1, RH_1, T2, RH_2, T3, T4, RH_4, T5, T6, RH_7, T8, RH_8, T9, T_out, Windspeed, Tdewpoint
+```{r}
+appliances_data <- appliances %>%
+  select(Appliances,lights, T1, RH_1, T2, RH_2, T3, T4, RH_4, T5, T6, RH_7, T8, RH_8, T9, T_out, Windspeed, Tdewpoint)
 x = model.matrix(Appliances~., appliances_data)[,-1] # trim off the first column
 # leaving only the predictors
 y = appliances_data %>%
@@ -22,7 +37,6 @@ select(Appliances) %>%
 unlist() %>%
 as.numeric()
 ```
-
 ```{r}
 grid = 10^seq(10, -2, length = 100)
 ridge_mod = glmnet(x, y, alpha = 0, lambda = grid)
@@ -41,7 +55,7 @@ sqrt(sum(coef(ridge_mod)[-1,60]^2)) # Calculate l2 norm
 ```
 
 ```{r}
-predict(ridge_mod, s = 50, type = "coefficients")[1:20,]
+predict(ridge_mod, s = 50, type = "coefficients")[1:18,]
 ```
 
 ```{r}
@@ -87,29 +101,11 @@ mean((ridge_pred - y_test)^2) # Calculate test MSE
 ```{r}
 out = glmnet(x, y, alpha = 0) # Fit ridge regression model on full dataset
 # Display coefficients using lambda chosen by CV
-predict(out, type = "coefficients", s = bestlam)[1:20,]
+predict(out, type = "coefficients", s = bestlam)[1:18,]
 ```
 
-```{r}
-lasso_mod = glmnet(x_train,y_train,alpha = 1,lambda = grid) # Fit lasso model on training data
-plot(lasso_mod) # Draw plot of coefficients
-set.seed(1)
-# Fit lasso model on training data
-cv.out = cv.glmnet(x_train, y_train, alpha = 1)
-plot(cv.out) # Draw plot of training MSE as a function of lambda
-bestlam = cv.out$lambda.min # Select lamda that minimizes training MSE
-# Use best lambda to predict test data
-lasso_pred = predict(lasso_mod, s = bestlam, newx = x_test)
-mean((lasso_pred - y_test)^2) # Calculate test MSE
-```
 
-```{r}
-out = glmnet(x, y, alpha = 1, lambda = grid) # Fit lasso model on full dataset
-# Display coefficients using lambda chosen by CV
-lasso_coef = predict(out, type = "coefficients", s = bestlam)[1:20,]
-lasso_coef
-lasso_coef[lasso_coef != 0] # Display only non-zero coefficients
 
-```
+
 
 
