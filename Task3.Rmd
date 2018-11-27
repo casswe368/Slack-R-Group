@@ -122,3 +122,13 @@ anova(model_aov)
 
 Variables that have an impact:
 lights, T1, RH_1, T2, RH_2, T3, T4, RH_4, T5, T6, RH_7, T8, RH_8, T9, T_out, Windspeed, Tdewpoint
+
+```{r}
+#transform the data variable to be meaningful
+library(lubridate)
+#remove "UTC" from data
+#use lubridate to make date into readable variable
+ymd_hms(Energy$date)
+```
+
+
