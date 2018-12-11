@@ -1,9 +1,12 @@
 ---
 title: "Ridge"
+author: "Sherry Cai, Nancy Guan, Maggie Sellers, Cas Sweeney, Xiruo Zheng"
+date: "12/11/2018"
 output: html_document
 ---
 
 ```{r}
+#load libraries that we will use
 library(ISLR)
 library(glmnet)
 library(dplyr)
@@ -13,6 +16,7 @@ library(mosaic)
 library(MASS)
 library(ggplot2)
 library(lubridate)
+#load dataset as appliances
 appliances <- read_csv("energydata_complete.csv")
 ```
 
@@ -24,54 +28,62 @@ appliances <- appliances %>%
   mutate(months=month(date))
 ```
 
-
+##Fit data to Anova model for choosing parameters
 ```{r}
-#model_aov <- aov(Appliances ~ date + lights + T1 + RH_1 + T2 + RH_2 + T3 + RH_3 + T4 + RH_4 + T5 + RH_5 + T6 + RH_6 + T7 + RH_7 + T8 + RH_8 + T9 + RH_9 + T_out + Press_mm_hg + RH_out + Windspeed + Visibility + Tdewpoint + rv1 + rv2 + hours + months, Energy)
-Energy3 <- appliances %>%
-  select(-date)
-
-model_aov <- aov(Appliances ~. , Energy3)
+model_aov <- aov(Appliances ~. , appliances)
 anova(model_aov)
 ```
 
 Variables that have an impact:
 lights, T1, RH_1, T2, RH_2, T3, T4, RH_4, T5, T6, RH_7, T8, RH_8, T9, T_out, Windspeed, Tdewpoint, hours, months
 
-##Full model with all variables
+##Full model with all variables except date
 ```{r}
-appliances_data <- Energy3 #%>%
-  #select(Appliances,lights, T1, RH_1, T2, RH_2, T3, T4, RH_4, T5, T6, RH_7, T8, RH_8, T9, T_out, Windspeed, Tdewpoint)
-x = model.matrix(Appliances~., appliances_data)[,-1] # trim off the first column
+#trim off date because it is not strictly numerical
+Energy3 <- appliances %>%
+  select(-date)
+appliances_data <- Energy3
+# trim off the first column
 # leaving only the predictors
+x = model.matrix(Appliances~., appliances_data)[,-1] 
 y = appliances_data %>%
 select(Appliances) %>%
 unlist() %>%
 as.numeric()
 ```
 
+##Ridge Regression on the full model
+
 ```{r}
+#a grid of values ranging from λ = 10^10 to λ = 10^−2 for cross-val
 grid = 10^seq(10, -2, length = 100)
 ridge_mod = glmnet(x, y, alpha = 0, lambda = grid)
 dim(coef(ridge_mod))
+#Draw plot for coefficients
 plot(ridge_mod) 
-ridge_mod$lambda[50] #Display 50th lambda value
-coef(ridge_mod)[,50] # Display coefficients associated with 50th lambda value
-sqrt(sum(coef(ridge_mod)[-1,50]^2)) # Calculate l_2 norm
+#Display 50th lambda value
+ridge_mod$lambda[50] 
+#Display coefficients associated with 50th lambda value
+coef(ridge_mod)[,50] 
+# Calculate l_2 norm
+sqrt(sum(coef(ridge_mod)[-1,50]^2)) 
 ```
 
 ```{r}
-ridge_mod$lambda[60] #Display 60th lambda value
-coef(ridge_mod)[,60] # Display coefficients associated with 60th lambda value
-sqrt(sum(coef(ridge_mod)[-1,60]^2)) # Calculate l2 norm
-
+#Display 60th lambda value
+ridge_mod$lambda[60] 
+#Display coefficients associated with 60th lambda value
+coef(ridge_mod)[,60] 
+#Calculate l2 norm
+sqrt(sum(coef(ridge_mod)[-1,60]^2)) 
 ```
 
-```{r}
-predict(ridge_mod, s = 50, type = "coefficients")[1:30,]
-```
+
 
 ```{r}
 set.seed(1)
+#Specifying training and test set
+#Half of the data set is used as training set, the other half as test set
 train = appliances_data %>%
 sample_frac(0.5)
 test = appliances_data %>%
@@ -86,17 +98,16 @@ y_test = test %>%
 select(Appliances) %>%
 unlist() %>%
 as.numeric()
+#Fit the model to training set
 ridge_mod = glmnet(x_train, y_train, alpha=0, lambda = grid, thresh = 1e-12)
+#predict with lambda=4
 ridge_pred = predict(ridge_mod, s = 4, newx = x_test)
-mean((ridge_pred - y_test)^2)  #testMSE
+#testMSE for lambda=4
+mean((ridge_pred - y_test)^2)  
 ```
 
-```{r}
-mean((mean(y_train) - y_test)^2)
-ridge_pred = predict(ridge_mod, s = 1e10, newx = x_test)
-mean((ridge_pred - y_test)^2)
-```
 
+## Predict with cross validation
 ```{r}
 set.seed(1)
 # Fit ridge regression model on training data
@@ -104,14 +115,17 @@ cv.out = cv.glmnet(x_train, y_train, alpha = 0)
 # Select lamda that minimizes training MSE
 bestlam = cv.out$lambda.min
 bestlam
-plot(cv.out) # Draw plot of training MSE as a function of lambda
+# Draw plot of training MSE as a function of lambda
+plot(cv.out) 
 # Use best lambda to predict test data
 ridge_pred = predict(ridge_mod, s = bestlam, newx = x_test)
-mean((ridge_pred - y_test)^2) # Calculate test MSE
+# Calculate test MSE
+mean((ridge_pred - y_test)^2) 
 ```
 
 ```{r}
-out = glmnet(x, y, alpha = 0) # Fit ridge regression model on full dataset
+# Fit ridge regression model on full dataset
+out = glmnet(x, y, alpha = 0) 
 # Display coefficients using lambda chosen by CV
 predict(out, type = "coefficients", s = bestlam)[1:30,]
 ```
@@ -122,7 +136,8 @@ predict(out, type = "coefficients", s = bestlam)[1:30,]
 ```{r}
 appliances_data_limited <- Energy3 %>%
   select(Appliances,lights, T1, RH_1, T2, RH_2, T3, T4, RH_4, T5, T6, RH_7, T8, RH_8, T9, T_out, Windspeed, Tdewpoint, hours, months)
-x = model.matrix(Appliances~., appliances_data_limited)[,-1] # trim off the first column
+# trim off the first column
+x = model.matrix(Appliances~., appliances_data_limited)[,-1] 
 # leaving only the predictors
 y = appliances_data_limited %>%
 select(Appliances) %>%
@@ -135,49 +150,49 @@ grid = 10^seq(10, -2, length = 100)
 ridge_mod = glmnet(x, y, alpha = 0, lambda = grid)
 dim(coef(ridge_mod))
 plot(ridge_mod) 
-ridge_mod$lambda[50] #Display 50th lambda value
-coef(ridge_mod)[,50] # Display coefficients associated with 50th lambda value
-sqrt(sum(coef(ridge_mod)[-1,50]^2)) # Calculate l_2 norm
+# Display 50th lambda value
+ridge_mod$lambda[50] 
+# Display coefficients associated with 50th lambda value
+coef(ridge_mod)[,50] 
+# Calculate l_2 norm
+sqrt(sum(coef(ridge_mod)[-1,50]^2)) 
 ```
 
-```{r}
-ridge_mod$lambda[60] #Display 60th lambda value
-coef(ridge_mod)[,60] # Display coefficients associated with 60th lambda value
-sqrt(sum(coef(ridge_mod)[-1,60]^2)) # Calculate l2 norm
 
-```
 
 ```{r}
+#a test with lambda = 50
 predict(ridge_mod, s = 50, type = "coefficients")[1:20,]
 ```
 
 ```{r}
 set.seed(1)
+#Specifying training and test set
+#Half of the data set is used as training set, the other half as test set
 train = appliances_data_limited %>%
-sample_frac(0.5)
+  sample_frac(0.5)
 test = appliances_data_limited %>%
-setdiff(train)
+  setdiff(train)
 x_train = model.matrix(Appliances~., train)[,-1]
 x_test = model.matrix(Appliances~., test)[,-1]
 y_train = train %>%
-select(Appliances) %>%
-unlist() %>%
-as.numeric()
+  select(Appliances) %>%
+  unlist() %>%
+  as.numeric()
 y_test = test %>%
-select(Appliances) %>%
-unlist() %>%
-as.numeric()
+  select(Appliances) %>%
+  unlist() %>%
+  as.numeric()
+#Fit the model to training set
 ridge_mod = glmnet(x_train, y_train, alpha=0, lambda = grid, thresh = 1e-12)
+#predict with lambda = 4
 ridge_pred = predict(ridge_mod, s = 4, newx = x_test)
-mean((ridge_pred - y_test)^2)  #testMSE
+#testMSE for lambda=4
+mean((ridge_pred - y_test)^2)  
 ```
 
-```{r}
-mean((mean(y_train) - y_test)^2)
-ridge_pred = predict(ridge_mod, s = 1e10, newx = x_test)
-mean((ridge_pred - y_test)^2)
-```
-
+## Select best lambda with cross validation
+## Predict test data and generate MSE
 ```{r}
 set.seed(1)
 # Fit ridge regression model on training data
@@ -185,14 +200,17 @@ cv.out = cv.glmnet(x_train, y_train, alpha = 0)
 # Select lamda that minimizes training MSE
 bestlam = cv.out$lambda.min
 bestlam
-plot(cv.out) # Draw plot of training MSE as a function of lambda
+# Draw plot of training MSE as a function of lambda
+plot(cv.out) 
 # Use best lambda to predict test data
 ridge_pred = predict(ridge_mod, s = bestlam, newx = x_test)
-mean((ridge_pred - y_test)^2) # Calculate test MSE
+# Calculate test MSE
+mean((ridge_pred - y_test)^2) 
 ```
-
+## Obtain coefficients with best lambda seleted through cross-val
 ```{r}
-out = glmnet(x, y, alpha = 0) # Fit ridge regression model on full dataset
+# Fit ridge regression model on full dataset
+out = glmnet(x, y, alpha = 0) 
 # Display coefficients using lambda chosen by CV
 predict(out, type = "coefficients", s = bestlam)[1:20,]
 ```
