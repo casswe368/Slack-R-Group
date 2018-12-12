@@ -2,7 +2,9 @@
 title: "Ridge"
 author: "Sherry Cai, Nancy Guan, Maggie Sellers, Cas Sweeney, Xiruo Zheng"
 date: "12/11/2018"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r}
@@ -29,6 +31,7 @@ appliances <- appliances %>%
 ```
 
 ##Fit data to Anova model for choosing parameters
+
 ```{r}
 model_aov <- aov(Appliances ~. , appliances)
 anova(model_aov)
@@ -38,16 +41,17 @@ Variables that have an impact:
 lights, T1, RH_1, T2, RH_2, T3, T4, RH_4, T5, T6, RH_7, T8, RH_8, T9, T_out, Windspeed, Tdewpoint, hours, months
 
 ##Full model with all variables except date
+
 ```{r}
 #trim off date because it is not strictly numerical
 Energy3 <- appliances %>%
-  select(-date)
+  dplyr::select(-date)
 appliances_data <- Energy3
 # trim off the first column
 # leaving only the predictors
 x = model.matrix(Appliances~., appliances_data)[,-1] 
 y = appliances_data %>%
-select(Appliances) %>%
+dplyr::select(Appliances) %>%
 unlist() %>%
 as.numeric()
 ```
@@ -55,7 +59,7 @@ as.numeric()
 ##Ridge Regression on the full model
 
 ```{r}
-#a grid of values ranging from λ = 10^10 to λ = 10^−2 for cross-val
+#a grid of values ranging from lambda = 10^10 to lambda = 10^-2 for cross-val
 grid = 10^seq(10, -2, length = 100)
 ridge_mod = glmnet(x, y, alpha = 0, lambda = grid)
 dim(coef(ridge_mod))
@@ -91,11 +95,11 @@ setdiff(train)
 x_train = model.matrix(Appliances~., train)[,-1]
 x_test = model.matrix(Appliances~., test)[,-1]
 y_train = train %>%
-select(Appliances) %>%
+dplyr::select(Appliances) %>%
 unlist() %>%
 as.numeric()
 y_test = test %>%
-select(Appliances) %>%
+dplyr::select(Appliances) %>%
 unlist() %>%
 as.numeric()
 #Fit the model to training set
@@ -108,6 +112,7 @@ mean((ridge_pred - y_test)^2)
 
 
 ## Predict with cross validation
+
 ```{r}
 set.seed(1)
 # Fit ridge regression model on training data
@@ -135,12 +140,12 @@ predict(out, type = "coefficients", s = bestlam)[1:30,]
 
 ```{r}
 appliances_data_limited <- Energy3 %>%
-  select(Appliances,lights, T1, RH_1, T2, RH_2, T3, T4, RH_4, T5, T6, RH_7, T8, RH_8, T9, T_out, Windspeed, Tdewpoint, hours, months)
+  dplyr::select(Appliances,lights, T1, RH_1, T2, RH_2, T3, T4, RH_4, T5, T6, RH_7, T8, RH_8, T9, T_out, Windspeed, Tdewpoint, hours, months)
 # trim off the first column
 x = model.matrix(Appliances~., appliances_data_limited)[,-1] 
 # leaving only the predictors
 y = appliances_data_limited %>%
-select(Appliances) %>%
+dplyr::select(Appliances) %>%
 unlist() %>%
 as.numeric()
 ```
@@ -176,11 +181,11 @@ test = appliances_data_limited %>%
 x_train = model.matrix(Appliances~., train)[,-1]
 x_test = model.matrix(Appliances~., test)[,-1]
 y_train = train %>%
-  select(Appliances) %>%
+  dplyr::select(Appliances) %>%
   unlist() %>%
   as.numeric()
 y_test = test %>%
-  select(Appliances) %>%
+  dplyr::select(Appliances) %>%
   unlist() %>%
   as.numeric()
 #Fit the model to training set
@@ -192,7 +197,9 @@ mean((ridge_pred - y_test)^2)
 ```
 
 ## Select best lambda with cross validation
+
 ## Predict test data and generate MSE
+
 ```{r}
 set.seed(1)
 # Fit ridge regression model on training data
@@ -207,7 +214,9 @@ ridge_pred = predict(ridge_mod, s = bestlam, newx = x_test)
 # Calculate test MSE
 mean((ridge_pred - y_test)^2) 
 ```
+
 ## Obtain coefficients with best lambda seleted through cross-val
+
 ```{r}
 # Fit ridge regression model on full dataset
 out = glmnet(x, y, alpha = 0) 
